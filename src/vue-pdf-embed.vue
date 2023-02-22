@@ -18,12 +18,7 @@
 import * as pdf from 'pdfjs-dist/legacy/build/pdf.js'
 import PdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.js'
 import { PDFLinkService } from 'pdfjs-dist/legacy/web/pdf_viewer.js'
-import {
-  addPrintStyles,
-  createPrintIframe,
-  emptyElement,
-  releaseChildCanvases,
-} from './util.js'
+import { addPrintStyles, createPrintIframe, emptyElement } from './util.js'
 
 pdf.GlobalWorkerOptions.workerPort = new PdfWorker()
 
@@ -75,16 +70,11 @@ export default {
       },
     },
     /**
-     * Desired ratio of canvas size to document size.
-     * @values Number
-     */
-    scale: Number,
-    /**
      * Source of the document to display.
-     * @values Object, String, URL, TypedArray
+     * @values String, URL, TypedArray
      */
     source: {
-      type: [Object, String, URL, Uint8Array],
+      type: [Object, String, Uint8Array],
       required: true,
     },
     /**
@@ -129,7 +119,6 @@ export default {
       ],
       async ([newSource], [oldSource]) => {
         if (newSource !== oldSource) {
-          releaseChildCanvases(this.$el)
           await this.load()
         }
         this.render()
@@ -139,14 +128,6 @@ export default {
   async mounted() {
     await this.load()
     this.render()
-  },
-  beforeDestroy() {
-    releaseChildCanvases(this.$el)
-    this.document?.destroy()
-  },
-  beforeUnmount() {
-    releaseChildCanvases(this.$el)
-    this.document?.destroy()
   },
   methods: {
     /**
@@ -179,13 +160,13 @@ export default {
       }
 
       try {
-        if (this.source._pdfInfo) {
+        if (
+          this.source instanceof Object &&
+          this.source.constructor.name === 'PDFDocumentProxy'
+        ) {
           this.document = this.source
         } else {
           const documentLoadingTask = pdf.getDocument(this.source)
-          documentLoadingTask.onProgress = (progressParams) => {
-            this.$emit('progress', progressParams)
-          }
           documentLoadingTask.onPassword = (callback, reason) => {
             const retry = reason === pdf.PasswordResponses.INCORRECT_PASSWORD
             this.$emit('password-requested', callback, retry)
@@ -207,17 +188,15 @@ export default {
      * NOTE: Ignored if the document is not loaded.
      *
      * @param {number} dpi - Print resolution.
-     * @param {string} filename - Predefined filename to save.
-     * @param {boolean} allPages - Ignore page prop to print all pages.
      */
-    async print(dpi = 300, filename = '', allPages = false) {
-      if (!this.document) {
+    async print(dpi = 300) {
+      if (!this.document || !this.pageNums.length) {
         return
       }
 
       const printUnits = dpi / 72
       const styleUnits = 96 / 72
-      let container, iframe, title
+      let container, iframe
 
       try {
         container = document.createElement('div')
@@ -225,13 +204,8 @@ export default {
         window.document.body.appendChild(container)
         iframe = await createPrintIframe(container)
 
-        const pageNums =
-          this.page && !allPages
-            ? [this.page]
-            : [...Array(this.document.numPages + 1).keys()].slice(1)
-
         await Promise.all(
-          pageNums.map(async (pageNum, i) => {
+          this.pageNums.map(async (pageNum, i) => {
             const page = await this.document.getPage(pageNum)
             const viewport = page.getViewport({ scale: 1 })
 
@@ -259,22 +233,14 @@ export default {
           })
         )
 
-        if (filename) {
-          title = window.document.title
-          window.document.title = filename
-        }
-
         iframe.contentWindow.focus()
         iframe.contentWindow.print()
       } catch (e) {
         this.$emit('printing-failed', e)
       } finally {
-        if (title) {
-          window.document.title = title
+        if (container) {
+          container.parentNode.removeChild(container)
         }
-
-        releaseChildCanvases(container)
-        container.parentNode?.removeChild(container)
       }
     },
     /**
@@ -340,7 +306,7 @@ export default {
      */
     async renderPage(page, canvas, width) {
       const viewport = page.getViewport({
-        scale: this.scale ?? Math.ceil(width / page.view[2]) + 1,
+        scale: Math.ceil(width / page.view[2]) + 1,
         rotation: this.rotation,
       })
 

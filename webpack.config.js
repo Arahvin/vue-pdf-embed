@@ -1,5 +1,4 @@
 const { merge } = require('webpack-merge')
-const CopyPlugin = require('copy-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const { VueLoaderPlugin: Vue2LoaderPlugin } = require('vue-loader')
 const { VueLoaderPlugin: Vue3LoaderPlugin } = require('vue-loader-next')
@@ -69,9 +68,6 @@ module.exports = [
     output: {
       filename: 'vue3-pdf-embed.js',
     },
-    plugins: [
-      new Vue3LoaderPlugin(),
-      new CopyPlugin({ patterns: [{ from: 'types' }] }),
-    ],
+    plugins: [new Vue3LoaderPlugin()],
   }),
 ]

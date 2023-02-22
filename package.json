@@ -1,6 +1,6 @@
 {
   "name": "vue-pdf-embed",
-  "version": "1.1.5",
+  "version": "1.1.2",
   "description": "PDF embed component for Vue 2 and Vue 3",
   "keywords": [
     "vue",
@@ -8,7 +8,7 @@
     "pdf"
   ],
   "main": "dist/vue3-pdf-embed.js",
-  "types": "types/vue3-pdf-embed.d.ts",
+  "types": "types/index.d.ts",
   "files": [
     "dist/*",
     "src/*",
@@ -25,13 +25,13 @@
     "lint": "eslint \"**/*.{js,vue}\"",
     "lint:fix": "eslint \"**/*.{js,vue}\" --fix"
   },
+  "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.14.2",
     "@babel/preset-env": "^7.14.2",
     "@vue/compiler-sfc": "^3.0.11",
     "babel-jest": "^26.6.3",
     "babel-loader": "^8.2.2",
-    "copy-webpack-plugin": "^9.1.0",
     "css-loader": "^5.2.6",
     "eslint": "^7.27.0",
     "eslint-config-prettier": "^8.3.0",
@@ -40,7 +40,7 @@
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.3.2",
     "jest": "^26.6.3",
-    "pdfjs-dist": "git+https://github.com/Arahvin/pdfjs-dist.git",
+    "pdfjs-dist": "^2.9.359",
     "prettier": "^2.3.0",
     "sass": "^1.49.8",
     "sass-loader": "^12.6.0",
